@@ -2,19 +2,27 @@
 
 namespace App\Service\Round\RoundSimulator;
 
+use App\Entity\Game;
 use App\Entity\Round;
+use App\Event\RoundCompletedEvent;
 use App\Service\Game\GameSimulator\GameSimulatorInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class RoundSimulator implements RoundSimulatorInterface
 {
     private GameSimulatorInterface $gameSimulator;
     private EntityManagerInterface $entityManager;
+    private EventDispatcherInterface $eventDispatcher;
 
-    public function __construct(GameSimulatorInterface $gameSimulator, EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        GameSimulatorInterface $gameSimulator,
+        EntityManagerInterface $entityManager,
+        EventDispatcherInterface $eventDispatcher
+    ) {
         $this->gameSimulator = $gameSimulator;
         $this->entityManager = $entityManager;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function simulate(Round $round): void
@@ -25,13 +33,14 @@ class RoundSimulator implements RoundSimulatorInterface
             $game
                 ->setHomeGoals($simulationResult->getHomeGoals())
                 ->setGuestGoals($simulationResult->getGuestGoals())
-                ->setStatus('finished');
+                ->setStatus(Game::STATUS_FINISHED);
         }
 
-        $round->setStatus('finished');
+        $round->setStatus(Game::STATUS_FINISHED);
         $round->getTournament()->setCurrentRound($round->getNextRound());
 
         $this->entityManager->flush();
+        $this->eventDispatcher->dispatch(new RoundCompletedEvent($round->getGuid()), RoundCompletedEvent::EVENT_KEY);
     }
 
 }

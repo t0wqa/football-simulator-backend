@@ -2,7 +2,7 @@
 
 namespace App\Service\Tournament\ChampionshipChancesPredictor\Output;
 
-class ChampionshipChancesResult
+final class ChampionshipChancesResult
 {
     private array $probabilityOfWinByTeam;
 

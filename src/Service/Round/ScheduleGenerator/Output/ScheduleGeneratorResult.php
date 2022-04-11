@@ -4,7 +4,7 @@ namespace App\Service\Round\ScheduleGenerator\Output;
 
 use App\Service\Round\ScheduleGenerator\DTO\Round;
 
-class ScheduleGeneratorResult
+final class ScheduleGeneratorResult
 {
     /**
      * @var Round[]

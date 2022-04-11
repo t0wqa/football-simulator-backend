@@ -213,6 +213,12 @@
     "symfony/polyfill-uuid": {
         "version": "v1.25.0"
     },
+    "symfony/property-access": {
+        "version": "v6.0.7"
+    },
+    "symfony/property-info": {
+        "version": "v6.0.7"
+    },
     "symfony/proxy-manager-bridge": {
         "version": "v6.0.6"
     },
@@ -230,6 +236,9 @@
         ]
     },
     "symfony/runtime": {
+        "version": "v6.0.7"
+    },
+    "symfony/serializer": {
         "version": "v6.0.7"
     },
     "symfony/service-contracts": {

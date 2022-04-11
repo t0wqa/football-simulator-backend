@@ -2,7 +2,7 @@
 
 namespace App\Service\Round\ScheduleGenerator\DTO;
 
-class Round
+final class Round
 {
     /**
      * @var Game[]

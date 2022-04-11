@@ -16,6 +16,9 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
  */
 class Round
 {
+    public const STATUS_PLANNING = 'planning';
+    public const STATUS_FINISHED = 'finished';
+
     /**
      * @ORM\Column(type="guid")
      * @ORM\Id
@@ -110,21 +113,15 @@ class Round
     }
 
     /**
-     * @return GameInterface[]|Collection
+     * @return GameInterface[]|Game[]|Collection
      */
     public function getGames(): Collection
     {
         return $this->games;
     }
 
-    public function areAllGamesFinished(): bool
+    public function isFinished(): bool
     {
-        foreach ($this->games as $game) {
-            if ($game->getStatus() !== 'finished') {
-                return false;
-            }
-        }
-
-        return true;
+        return self::STATUS_FINISHED === $this->status;
     }
 }

@@ -7,79 +7,96 @@ use App\Service\Round\ScheduleGenerator\DTO\Game;
 use App\Service\Round\ScheduleGenerator\DTO\Round;
 use App\Service\Round\ScheduleGenerator\Output\ScheduleGeneratorResult;
 
+/**
+ * The algorithms presented here builds a matrix of teams at each round.
+ * Each matrix is of <GAMES_PER_ROUND>X2 size. Every next matrix is built by moving around
+ * elements of previous.
+ *
+ * Each resulted matrix is then used to build pairs of opponent teams.
+ *
+ * TODO need some refactoring to make it readable, for example, by decomposing the method
+ */
 class ScheduleGenerator implements ScheduleGeneratorInterface
 {
     public function generateSchedule(Tournament $tournament): ScheduleGeneratorResult
     {
         $teamGuids = $tournament->getParticipatingTeamGuidsRandomlyOrdered();
+
         if (count($teamGuids) % 2 !== 0) {
             throw new \LogicException('Teams number must be even');
         }
 
-        $allGames = [];
-        foreach ($teamGuids as $checkingTeamGuid) {
-            foreach ($teamGuids as $checkedTeamGuid) {
-                if ($checkingTeamGuid === $checkedTeamGuid) {
-                    continue;
-                }
+        $roundsCount = count($teamGuids) - 1;
+        $initialMatrix = $this->createInitialMatrix($teamGuids);
 
-                $gameKey = sprintf('key%s____%s', $checkingTeamGuid, $checkedTeamGuid);
-                if (!array_key_exists($gameKey, $allGames)) {
-                    $allGames[$gameKey] = new Game($checkingTeamGuid, $checkedTeamGuid);
-                }
+        $allMatrixItems = [];
+        for ($roundNumber = 1; $roundNumber <= $roundsCount; $roundNumber++) {
+            if ($roundNumber === 1) {
+                $allMatrixItems[] = $initialMatrix;
+                continue;
             }
-        }
 
-        $gamesPerRound = count($teamGuids) / 2;
-        $roundsCount = (count($teamGuids) - 1) * 2;
-
-        $gamesCount = 0;
-        while ($gamesCount !== ($roundsCount * $gamesPerRound)) {
-            $alreadyPlannedGameKeys = [];
-            $rounds = [];
-            for ($roundNumber = 1; $roundNumber <= $roundsCount; $roundNumber++) {
-                /** @var Game[] $gamesLeft */
-                $gamesLeft = array_values(
-                    array_filter($allGames, function (Game $game, $key) use ($alreadyPlannedGameKeys) {
-                        return !in_array($key, $alreadyPlannedGameKeys, true);
-                    }, ARRAY_FILTER_USE_BOTH)
-                );
-                shuffle($gamesLeft);
-
-                $gamesForRound = [];
-                $teamsInRound = [];
-
-                for ($gameNumber = 1; $gameNumber <= $gamesPerRound; $gameNumber++) {
-                    foreach ($gamesLeft as $gameAvailable) {
-                        if (!in_array($gameAvailable->getHomeTeamGuid(), $teamsInRound) && !in_array($gameAvailable->getGuestTeamGuid(), $teamsInRound)) {
-                            $teamsInRound[] = $gameAvailable->getHomeTeamGuid();
-                            $teamsInRound[] = $gameAvailable->getGuestTeamGuid();
-
-                            $gamesForRound[] = $gameAvailable;
-                        }
+            $currentMatrix = $allMatrixItems[count($allMatrixItems) - 1];
+            $newMatrix = [];
+            foreach ($currentMatrix as $rowKey => $row) {
+                foreach ($row as $columnKey => $column) {
+                    if (0 === $rowKey && 0 === $columnKey) {
+                        $newMatrix[$rowKey][$columnKey] = $column;
+                        continue;
                     }
 
-                    foreach ($gamesForRound as $gameForRound) {
-                        $alreadyPlannedGameKeys[] = sprintf('key%s____%s', $gameForRound->getHomeTeamGuid(), $gameForRound->getGuestTeamGuid());
+                    if (1 === $rowKey && 0 === $columnKey) {
+                        $newMatrix[0][1] = $column;
+                        continue;
                     }
 
-                    $rounds[$roundNumber] = new Round($gamesForRound);
+                    if ((count($currentMatrix) - 1) === $rowKey && 1 === $columnKey) {
+                        $newMatrix[$rowKey][0] = $column;
+                        continue;
+                    }
+
+                    if (1 === $columnKey) {
+                        $newMatrix[$rowKey + 1][$columnKey] = $column;
+                        continue;
+                    }
+
+                    $newMatrix[$rowKey - 1][$columnKey] = $column;
                 }
             }
 
-            $gamesInRounds = [];
-            /** @var Round $round */
-            foreach ($rounds as $round) {
-                foreach ($round->getGames() as $game) {
-                    $gamesInRounds[] = $game;
-                }
-            }
-            $gamesCount = count($gamesInRounds);
-            echo $gamesCount . PHP_EOL;
+            $allMatrixItems[] = $newMatrix;
         }
 
-        shuffle($rounds);
+        $reversedAllMatrix = array_reverse($allMatrixItems);
+        foreach ($reversedAllMatrix as $matrix) {
+            $reversedMatrix = [];
+            foreach (array_reverse($matrix) as $row) {
+                $reversedMatrix[] = array_reverse($row);
+            }
+
+            $allMatrixItems[] = $reversedMatrix;
+        }
+
+        $rounds = [];
+        foreach ($allMatrixItems as $matrixItem) {
+            $games = [];
+            foreach ($matrixItem as $row) {
+                $games[] = new Game($row[0], $row[1]);
+            }
+
+            $rounds[] = new Round($games);
+        }
+
         return new ScheduleGeneratorResult($rounds);
+    }
+
+    protected function createInitialMatrix(array $teamGuids): array
+    {
+        $initialMatrix = [];
+        foreach (array_chunk($teamGuids, 2) as $chunk) {
+            $initialMatrix[] = $chunk;
+        }
+        return $initialMatrix;
     }
 
 }

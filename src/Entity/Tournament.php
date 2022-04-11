@@ -40,6 +40,7 @@ class Tournament
 
     /**
      * @ORM\OneToMany(targetEntity="Round", mappedBy="tournament")
+     * @ORM\OrderBy({"position" = "ASC"})
      */
     private Collection $rounds;
 
@@ -134,5 +135,18 @@ class Tournament
     {
         $this->rounds = $rounds;
         return $this;
+    }
+
+    public function getNextRound(): ?Round
+    {
+        if ($this->currentRound === null) {
+            $currentRound = $this->rounds->filter(function (Round $round) {
+                return $round->getStatus() === Round::STATUS_PLANNING;
+            })->first();
+
+            return $currentRound ?: null;
+        }
+
+        return $this->currentRound;
     }
 }

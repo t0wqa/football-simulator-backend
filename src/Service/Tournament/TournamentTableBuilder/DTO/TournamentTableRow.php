@@ -5,17 +5,11 @@ namespace App\Service\Tournament\TournamentTableBuilder\DTO;
 class TournamentTableRow
 {
     private string $teamGuid;
-
     private string $teamTitle;
-
     private int $winsCount = 0;
-
     private int $defeatsCount = 0;
-
     private int $drawsCount = 0;
-
     private int $goalsScored = 0;
-
     private int $goalsMissed = 0;
 
     public function getTeamGuid(): string

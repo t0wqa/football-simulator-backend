@@ -3,6 +3,7 @@
 namespace App\Service\Game\GameSimulator\Output;
 
 use App\Entity\Contract\GameInterface;
+use App\Entity\Game;
 
 final class GameSimulatorResult implements GameInterface
 {
@@ -31,7 +32,7 @@ final class GameSimulatorResult implements GameInterface
 
     public function getStatus(): string
     {
-        return 'finished';
+        return Game::STATUS_FINISHED;
     }
 
     public function getHomeTeamGuid(): string

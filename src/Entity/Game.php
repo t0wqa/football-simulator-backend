@@ -14,6 +14,9 @@ use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
  */
 class Game implements GameInterface
 {
+    public const STATUS_PLANNING = 'planning';
+    public const STATUS_FINISHED = 'finished';
+
     /**
      * @ORM\Column(type="guid")
      * @ORM\Id

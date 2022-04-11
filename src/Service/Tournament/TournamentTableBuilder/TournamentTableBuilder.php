@@ -3,6 +3,7 @@
 namespace App\Service\Tournament\TournamentTableBuilder;
 
 use App\Entity\Contract\GameInterface;
+use App\Entity\Game;
 use App\Service\Tournament\TournamentTableBuilder\DTO\TournamentTableRow;
 use App\Service\Tournament\TournamentTableBuilder\Input\TournamentTableBuilderInput;
 use App\Service\Tournament\TournamentTableBuilder\Output\TournamentTable;
@@ -25,7 +26,7 @@ class TournamentTableBuilder implements TournamentTableBuilderInterface
             }
 
             foreach ($round->getGames() as $game) {
-                if ($game->getStatus() !== 'finished') {
+                if ($game->getStatus() !== Game::STATUS_FINISHED) {
                     continue;
                 }
 
